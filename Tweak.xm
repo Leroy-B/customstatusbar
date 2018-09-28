@@ -3,11 +3,14 @@
 #import <mach/mach.h>
 #import <mach/mach_host.h>
 
+@interface SBStatusBarStateAggregator : NSObject
+@end
+
 @interface UIStatusBarTimeItemView : UIStatusBarItemView {
 	NSString* _timeString;
 }
--(void)locationManager:(CLLocationManager *)manager didUpdateHeading:(CLHeading *)newHeading;
 -(void)startCompassUpdates;
+-(void)locationManager:(CLLocationManager *)manager startUpdatingHeading:(CLHeading *)heading startUpdatingLocation:(NSArray *)locations;
 @end
 
 CLLocationManager *locationManager;
@@ -34,6 +37,23 @@ static NSNumber *STGetSystemRAM(){
   }
 }
 
+%hook SBStatusBarStateAggregator
+
+	-(id)_sbCarrierNameForOperator:(id)arg1 {
+		NSLog(@"CustomStatusBar: _sbCarrierNameForOperator: %@", arg1);
+		return @"";
+		//return %orig(arg1); // returns "Salt"
+	}
+	-(void)_updateTimeItems {
+		NSLog(@"CustomStatusBar: _updateTimeItems called");
+		NSString *serviceString = MSHookIvar<NSString *>(self, "_serviceString");
+		NSLog(@"CustomStatusBar: serviceString: %@", serviceString);
+		MSHookIvar<NSString *>(self, "_serviceString") = @"";
+		%orig;
+	}
+
+%end
+
 %hook UIStatusBarTimeItemView
 
     %new
@@ -42,12 +62,14 @@ static NSNumber *STGetSystemRAM(){
         locationManager.delegate = (id)self;
         locationManager.desiredAccuracy = kCLLocationAccuracyBest;
         [locationManager startUpdatingHeading];
+		[locationManager startUpdatingLocation];
     }
 
     %new
-    -(void)locationManager:(CLLocationManager *)manager didUpdateHeading:(CLHeading *)newHeading{
-        degrees = (int)locationManager.heading.magneticHeading;
-        NSLog(@"from delegate method: %i", degrees);
+	-(void)locationManager:(CLLocationManager *)manager didUpdateHeading:(CLHeading *)newHeading {
+    //-(void)locationManager:(CLLocationManager *)manager startUpdatingHeading:(CLHeading *)heading startUpdatingLocation:(NSArray *)locations{
+        degrees = newHeading.magneticHeading;
+        //NSLog(@"CustomStatusBar: from delegate method: %i", degrees);
         if ((degrees >= 339) || (degrees <= 22)) {
             directionString = @"N";
 
@@ -72,9 +94,19 @@ static NSNumber *STGetSystemRAM(){
         }else if ((degrees > 294) && (degrees <= 338)) {
            directionString = @"NW";
         }
+		[[%c(UIStatusBarTimeItemView) alloc] contentsImage];
+
+		// CLLocation *mostRecentLocation = [locations lastObject];
+	    // bool haveValidAltitude = (mostRecentLocation.verticalAccuracy > 0);
+	    // if(haveValidAltitude){
+	    //     NSLog(@"CustomStatusBar: current altitude is: %g meters above sea level", mostRecentLocation.altitude);
+	    // } else {
+	    //     NSLog(@"CustomStatusBar: current altitude is unavailable");
+	    // }
     }
 
     -(id)contentsImage{
+		//NSLog(@"CustomStatusBar: called");
         [[%c(UIStatusBarTimeItemView) alloc] startCompassUpdates];
         __strong NSString *&timeString = MSHookIvar<NSString *>(self, "_timeString");
         NSDate *date = [NSDate date];
@@ -87,6 +119,7 @@ static NSNumber *STGetSystemRAM(){
     	NSInteger month = [components month];
 		NSString *hs = hour < 10 ? [NSString stringWithFormat:@"0%ld", (long)hour] : [NSString stringWithFormat:@"%ld", (long)hour];
 		NSString *ms = minute < 10 ? [NSString stringWithFormat:@"0%ld", (long)minute] : [NSString stringWithFormat:@"%ld", (long)minute];
+		//NSLog(@"CustomStatusBar: directionString %@", directionString);
         NSString *formedString = [[NSString stringWithFormat:@"%ld/%ld | %@:%@ | %@MB | %@", (long)day, (long)month, hs, ms, STGetSystemRAM(), directionString] retain];
         timeString = formedString;
         return %orig();
