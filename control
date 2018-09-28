@@ -1,0 +1,9 @@
+Package: ch.leroyb.customstatusbar
+Name: CustomStatusBar
+Depends: mobilesubstrate
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: LeroyB <leroy.email.inbox@gmail.com>
+Author: LeroyB <leroy.email.inbox@gmail.com>
+Section: Tweaks
