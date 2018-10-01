@@ -9,6 +9,8 @@
 @interface UIStatusBarTimeItemView : UIStatusBarItemView {
 	NSString* _timeString;
 }
++(id)sharedInstance;
+-(void)drawStatusText;
 -(void)startCompassUpdates;
 -(void)locationManager:(CLLocationManager *)manager startUpdatingHeading:(CLHeading *)heading startUpdatingLocation:(NSArray *)locations;
 @end
@@ -40,24 +42,24 @@ static NSNumber *STGetSystemRAM(){
 %hook SBStatusBarStateAggregator
 
 	-(id)_sbCarrierNameForOperator:(id)arg1 {
-		NSLog(@"CustomStatusBar: _sbCarrierNameForOperator: %@", arg1);
+		//NSLog(@"CustomStatusBar: _sbCarrierNameForOperator: %@", arg1);
 		return @"";
 		//return %orig(arg1); // returns "Salt"
 	}
-	-(void)_updateTimeItems {
-		NSLog(@"CustomStatusBar: _updateTimeItems called");
-		NSString *serviceString = MSHookIvar<NSString *>(self, "_serviceString");
-		NSLog(@"CustomStatusBar: serviceString: %@", serviceString);
-		MSHookIvar<NSString *>(self, "_serviceString") = @"";
-		%orig;
-	}
+	// -(void)_updateTimeItems {
+	// 	//NSLog(@"CustomStatusBar: _updateTimeItems called");
+	// 	NSString *serviceString = MSHookIvar<NSString *>(self, "_serviceString");
+	// 	//NSLog(@"CustomStatusBar: serviceString: %@", serviceString);
+	// 	MSHookIvar<NSString *>(self, "_serviceString") = @"";
+	// 	%orig;
+	// }
 
 %end
 
 %hook UIStatusBarTimeItemView
 
     %new
-    -(void)startCompassUpdates{
+    -(void)startCompassUpdates {
         locationManager = [[CLLocationManager alloc] init];
         locationManager.delegate = (id)self;
         locationManager.desiredAccuracy = kCLLocationAccuracyBest;
@@ -94,7 +96,7 @@ static NSNumber *STGetSystemRAM(){
         }else if ((degrees > 294) && (degrees <= 338)) {
            directionString = @"NW";
         }
-		[[%c(UIStatusBarTimeItemView) alloc] contentsImage];
+		// [[[%c(UIStatusBarTimeItemView) alloc] autorelease] drawStatusText];
 
 		// CLLocation *mostRecentLocation = [locations lastObject];
 	    // bool haveValidAltitude = (mostRecentLocation.verticalAccuracy > 0);
@@ -105,11 +107,10 @@ static NSNumber *STGetSystemRAM(){
 	    // }
     }
 
-    -(id)contentsImage{
-		//NSLog(@"CustomStatusBar: called");
-        [[%c(UIStatusBarTimeItemView) alloc] startCompassUpdates];
-        __strong NSString *&timeString = MSHookIvar<NSString *>(self, "_timeString");
-        NSDate *date = [NSDate date];
+	%new
+	-(void)drawStatusText {
+
+		NSDate *date = [NSDate date];
     	NSCalendar *calendar = [NSCalendar currentCalendar];
     	NSDateComponents *components = [calendar components:(NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond | NSCalendarUnitDay | NSCalendarUnitMonth) fromDate:date];
     	NSInteger hour = [components hour];
@@ -119,9 +120,13 @@ static NSNumber *STGetSystemRAM(){
     	NSInteger month = [components month];
 		NSString *hs = hour < 10 ? [NSString stringWithFormat:@"0%ld", (long)hour] : [NSString stringWithFormat:@"%ld", (long)hour];
 		NSString *ms = minute < 10 ? [NSString stringWithFormat:@"0%ld", (long)minute] : [NSString stringWithFormat:@"%ld", (long)minute];
-		//NSLog(@"CustomStatusBar: directionString %@", directionString);
-        NSString *formedString = [[NSString stringWithFormat:@"%ld/%ld | %@:%@ | %@MB | %@", (long)day, (long)month, hs, ms, STGetSystemRAM(), directionString] retain];
-        timeString = formedString;
+		//NSLog(@"CustomStatusBar: directionString %@ degrees %d", directionString, degrees);
+        //NSString *formedString = [[NSString stringWithFormat:@"%ld/%ld | %@:%@ | %@MB | %@", (long)day, (long)month, hs, ms, STGetSystemRAM(), directionString] retain];
+        MSHookIvar<NSString *>([%c(UIStatusBarTimeItemView) sharedInstance], "_timeString") = [[NSString stringWithFormat:@"%ld/%ld | %@:%@ | %@MB | %@", (long)day, (long)month, hs, ms, STGetSystemRAM(), directionString] retain];
+	}
+
+    -(id)contentsImage {
+        [[%c(UIStatusBarTimeItemView) alloc] startCompassUpdates];
         return %orig();
     }
 
