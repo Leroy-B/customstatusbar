@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo -e "<div><style>span{color:orange;}</style><span>Thank you for installing AlwaysRemindMe 😊</span>"
+echo -e "<div><style>span{color:orange;}</style><span>Please send me some Feedback ✌️</span>"

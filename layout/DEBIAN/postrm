@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo -e "<div><style>span{color:orange;}</style><span>I hope you had a good time with AlwaysRemindMe 😊</span>"
+echo -e "<div><style>span{color:orange;}</style><span>If you uninstalled AlwaysRemindMe because you had issues please report them to me!</span>"
