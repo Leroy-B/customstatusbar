@@ -62,25 +62,26 @@ static NSNumber *STGetSystemRAM(){
 	%new
 	-(void)drawStatusText {
 
+
+	}
+
+    -(id)contentsImage {
+		NSLog(@"CustomStatusBar: 1");
+		__strong NSString *&timeString = MSHookIvar<NSString *>(self, "_timeString");
+
 		NSDate *date = [NSDate date];
     	NSCalendar *calendar = [NSCalendar currentCalendar];
     	NSDateComponents *components = [calendar components:(NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond | NSCalendarUnitDay | NSCalendarUnitMonth) fromDate:date];
     	NSInteger hour = [components hour];
     	NSInteger minute = [components minute];
-        //NSInteger second = [components second];
         NSInteger day = [components day];
     	NSInteger month = [components month];
 		NSString *hs = hour < 10 ? [NSString stringWithFormat:@"0%ld", (long)hour] : [NSString stringWithFormat:@"%ld", (long)hour];
 		NSString *ms = minute < 10 ? [NSString stringWithFormat:@"0%ld", (long)minute] : [NSString stringWithFormat:@"%ld", (long)minute];
 		NSLog(@"CustomStatusBar: 2");
-		NSLog(@"CustomStatusBar: 3 MSHookIvar: %@", MSHookIvar<NSString *>(self, "_timeString"));
-        //NSString *formedString = [[NSString stringWithFormat:@"%ld/%ld | %@:%@ | %@MB | %@", (long)day, (long)month, hs, ms, STGetSystemRAM(), directionString] retain];
-        MSHookIvar<NSString *>(self, "_timeString") = [[NSString stringWithFormat:@"%ld/%ld | %@:%@ | %@MB", (long)day, (long)month, hs, ms, STGetSystemRAM()] retain];
-	}
-
-    -(id)contentsImage {
-		NSLog(@"CustomStatusBar: 1");
-		[[%c(UIStatusBarTimeItemView) alloc] drawStatusText];
+        NSString *formedString = [[NSString stringWithFormat:@"%ld/%ld | %@:%@ | %@MB", (long)day, (long)month, hs, ms, STGetSystemRAM()] retain];
+		timeString = formedString;
+		//[[%c(UIStatusBarTimeItemView) alloc] drawStatusText];
         return %orig();
     }
 

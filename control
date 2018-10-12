@@ -1,9 +1,9 @@
 Package: ch.leroyb.customstatusbar
 Name: CustomStatusBar
 Depends: mobilesubstrate
-Version: 0.0.1
+Version: 0.1.0
 Architecture: iphoneos-arm
-Description: An awesome MobileSubstrate tweak!
+Description: For the Statusbar. Removes Carrier text, adds date and free RAM!
 Maintainer: LeroyB <leroy.email.inbox@gmail.com>
 Author: LeroyB <leroy.email.inbox@gmail.com>
 Section: Tweaks
