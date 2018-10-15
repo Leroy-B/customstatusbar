@@ -15,6 +15,9 @@
 -(void)locationManager:(CLLocationManager *)manager startUpdatingHeading:(CLHeading *)heading startUpdatingLocation:(NSArray *)locations;
 @end
 
+@interface UIStatusBar
+@end
+
 CLLocationManager *locationManager;
 NSString *directionString = nil;
 int degrees;
@@ -38,6 +41,14 @@ static NSNumber *STGetSystemRAM(){
     return freeMemory;
   }
 }
+
+%hook UIStatusBar
+
+	-(BOOL)isDoubleHeight {
+		return NO;
+	}
+
+%end
 
 %hook SBStatusBarStateAggregator
 
